@@ -11,6 +11,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
     
     def get_url_info(self):
+        pass
 
 
 
