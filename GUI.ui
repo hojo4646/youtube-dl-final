@@ -222,7 +222,7 @@
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
-     <widget class="QLabel" name="label">
+     <widget class="QLabel" name="label_var_folder">
       <property name="geometry">
        <rect>
         <x>140</x>
