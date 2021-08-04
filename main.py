@@ -22,6 +22,26 @@ class Progress(QWidget,progressbar.Ui_Form):
         super().__init__(parent)
         self.setupUi(self)
         
+class Downloader:
+    def __init__(self):
+        pass
+
+    # Download the URL as Audio
+    def download_audio(self):
+        self.audio_ydl_opts['postprocessors'][0]['preferredcodec'] = self.combo_audio_formats.currentText()
+        self.audio_ydl_opts['outtmpl'] = self.filename
+        with ydl.YoutubeDL(self.audio_ydl_opts) as yt:
+            yt.download([self.get_url()])
+            self.set_folder()
+        
+
+    # Download the URL as Video
+    def download_vid(self):
+        self.video_ydl_opts['postprocessors'][0]['preferedformat'] = self.combo_video_formats.currentText()
+        self.video_ydl_opts['outtmpl'] = self.filename
+        with ydl.YoutubeDL(self.video_ydl_opts) as yt:
+            yt.download([self.get_url()])
+            self.set_folder()
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -55,6 +75,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.info_thread = Thread(target=self.live_info_thread)
         self.info_thread.setDaemon(True) # Die on main Death
         self.info_thread.start()
+
+        self.downloader = Downloader()
 
         self.info = {}
         self.filename = ''
@@ -105,18 +127,14 @@ class Window(QMainWindow, Ui_MainWindow):
         if self.check_audioonly.isChecked() == False:
             self.filename = self.get_vid_save_file()
             if self.filename != '':
-                self.download_thread_maker(self.download_vid)
+                self.download_thread_maker(self.downloader.download_vid)
                 self.progress.show()
         else:
             self.filename = self.get_audio_save_file()
             if self.filename != '':
-                self.download_thread_maker(self.download_audio)
+                self.download_thread_maker(self.downloader.download_audio)
                 self.progress.show()
 
-    def download_thumbnail(self):
-        
-        
-        pass 
 
     def download_thread_maker(self,x):
         self.download_thread = Thread(target=x)
@@ -127,24 +145,6 @@ class Window(QMainWindow, Ui_MainWindow):
     def get_url(self):
         return self.input_url.text()
 
-    
-
-    # Download the URL as Audio
-    def download_audio(self):
-        self.audio_ydl_opts['postprocessors'][0]['preferredcodec'] = self.combo_audio_formats.currentText()
-        self.audio_ydl_opts['outtmpl'] = self.filename
-        with ydl.YoutubeDL(self.audio_ydl_opts) as yt:
-            yt.download([self.get_url()])
-            self.set_folder()
-        
-
-    # Download the URL as Video
-    def download_vid(self):
-        self.video_ydl_opts['postprocessors'][0]['preferedformat'] = self.combo_video_formats.currentText()
-        self.video_ydl_opts['outtmpl'] = self.filename
-        with ydl.YoutubeDL(self.video_ydl_opts) as yt:
-            yt.download([self.get_url()])
-            self.set_folder()
 
     # Link to the "if text edited" signal, acting as a link to the "live_info_thread" which 
     # runs the "download_info" method on its own thread, preventing lag from the command being run every keystroke when
