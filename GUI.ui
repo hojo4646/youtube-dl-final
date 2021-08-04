@@ -357,7 +357,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Browse</string>
+       <string>Open Folder</string>
       </property>
      </widget>
      <widget class="QComboBox" name="combo_audio_formats">
