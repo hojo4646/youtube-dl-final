@@ -1,5 +1,7 @@
 import sys
 import os
+
+from PyQt5 import QtWidgets
 import progressbar
 from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow, QMessageBox, QWidget, QFileDialog
 from PyQt5.QtGui import QImage, QPixmap
@@ -14,6 +16,8 @@ import io
 import requests
 import matplotlib.pyplot as plt  #remove later 
 import wget
+import clipboard
+import subprocess
 
 BIN = 'bin'
 
@@ -31,7 +35,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.progress = Progress()
         self.progressBar = self.progress.progressBar
 
-
+        self.copymenu = QtWidgets.QMenu(self.label_var_description)
+        self.copyaction = self.copymenu.addAction("Copy Description")
+        self.button_tags.clicked.connect(self.copy_tags)
+        self.button_folder_browse.clicked.connect(self.open_folder)
         # Connect the download button to the "download_button"
         self.button_url_download.clicked.connect(self.download_button)
         # Connect the url input box to the boolean function that flips the "download_info" thread on and off
@@ -50,6 +57,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # The Variable needInfo, used to test if the line has changed without freezing
         self.needInfo = False
+        self.path = ''
+        self.folder = ''
 
         # Thread that handles getting the info from a video without causing GUI to freeze
         self.info_thread = Thread(target=self.live_info_thread)
@@ -99,7 +108,23 @@ class Window(QMainWindow, Ui_MainWindow):
         pass
     
     def set_folder(self):
-        self.label_var_folder.setText(self.filename.split('/')[:-2])
+        self.path = self.filename.split('/')[:-1]
+        self.folder = ''
+        for i in self.path:
+            self.folder += i+'/'
+        print(self.folder)
+        self.label_var_folder.setText(self.folder)
+        self.button_folder_browse.setEnabled(True)
+
+    def open_folder(self):
+        def clean(string):
+            final = ''
+            for i in string:
+                final += i+'\\'
+            return final
+        print(self.path)
+        print(clean(self.path))
+        subprocess.Popen('explorer "'+clean(self.path)+'"')
 
     def download_button(self):
         if self.check_audioonly.isChecked() == False:
@@ -113,10 +138,6 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.download_thread_maker(self.download_audio)
                 self.progress.show()
 
-    def download_thumbnail(self):
-        
-        
-        pass 
 
     def download_thread_maker(self,x):
         self.download_thread = Thread(target=x)
@@ -191,6 +212,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if self.needInfo == True:
                 self.update_info()
                 self.needInfo = False
+                self.button_tags.setEnabled(True)
 
 
     # Take dictionary from "download_info" and place information into their respective QtLabels. 
@@ -228,11 +250,23 @@ class Window(QMainWindow, Ui_MainWindow):
         img2pixmap(img)
 
     def download_thumbnail(self):
-        name = QFileDialog.getSaveFileName(self, 'Save File',str(self.info['title']+'.png'),'.'+self.combo_video_formats.currentText())
+        file_types = "JPEG (*.jpg)"
+        options = QFileDialog.Options()
+        name = QFileDialog.getSaveFileName(self, 'Save File',str(self.info['title']+'.jpg'),filter=file_types,options=options)
+        print(name)
         
         wget.download(url=self.info['thumbnails'][-1]['url'],out=name[0])
     
+    def contextMenuEvent(self, event):
+        action = self.copymenu.exec_(self.mapToGlobal(event.pos()))
+        if action == self.copyaction:
+            clipboard.copy(self.label_var_description.text())
+        #if action == self.pasteAction:
+        #    text, confirmed = QtWidgets.QInputDialog.getText(self,"Set Paste Text","Text:")
+        #    self.pasteText = text
 
+    def copy_tags(self):
+        clipboard.copy(','.join(self.info['tags']))
 
 
 if __name__ == "__main__":
